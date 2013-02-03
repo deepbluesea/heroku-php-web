@@ -1,0 +1,33 @@
+daemon off;
+worker_processes 1;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include             mime.types;
+    default_type        application/octet-stream;
+    sendfile            on;
+    gzip                on;
+    keepalive_timeout   30;
+
+    access_log /app/vendor/nginx/logs/http.log;
+    error_log /app/vendor/nginx/logs/http.log;
+
+    server {
+        listen          <%= ENV['PORT'] %>;
+        server_name     localhost;
+        root            /app/public;
+
+        location / {
+            try_files $uri @app;
+        }
+
+        location @app {
+            include         fastcgi_params;
+            fastcgi_param   SCRIPT_FILENAME /app/bin/heroku-nginx.php;
+            fastcgi_pass    unix:/tmp/php-fpm.socket;
+        }
+    }
+}

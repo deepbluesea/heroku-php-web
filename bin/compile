@@ -1,0 +1,60 @@
+#!/bin/bash
+set -e
+set -o pipefail
+
+pushd $(dirname $0) > /dev/null
+BIN_DIR=$(pwd)
+popd > /dev/null
+
+source $BIN_DIR/../bin-pkg/config
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+BASE_DIR=$BUILD_DIR
+NGINX_URL="http://${S3_BUCKET}.s3.amazonaws.com/nginx-${NGINX_VERSION}.tar.gz"
+PHP_URL="http://${S3_BUCKET}.s3.amazonaws.com/php-${PHP_VERSION}.tar.gz"
+
+mkdir -p $BASE_DIR
+
+# PHP ...
+cd $BASE_DIR
+if [ ! -d ./vendor/php ]; then
+    echo "-----> Installing php v${PHP_VERSION}"
+    mkdir -p ./vendor/php
+    cd ./vendor/php
+    curl -s --max-time 160 --location $PHP_URL | tar xz
+fi
+
+# NGINX ...
+cd $BASE_DIR
+if [ ! -d ./vendor/nginx ]; then
+    echo "-----> Installing nginx v${NGINX_VERSION}"
+    mkdir -p ./vendor/nginx
+    cd ./vendor/nginx
+    curl -s --max-time 60 --location $NGINX_URL | tar xz
+fi
+
+# Assets ...
+cd $BASE_DIR
+echo "-----> Copying configuration"
+rm -rf ./etc
+cp -r $BIN_DIR/../etc etc
+
+echo "-----> Generating boot script"
+
+cat > run.sh <<EOF
+#!/usr/bin/env bash
+echo "Generating nginx.conf"
+erb /app/etc/nginx.conf.erb > /app/vendor/nginx/conf/nginx.conf
+
+echo "Starting php-fpm"
+/app/vendor/php/sbin/php-fpm -y /app/etc/php-fpm.conf -c /app/etc/php.ini
+
+echo "Starting nginx"
+mkdir -p client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp
+touch /app/vendor/nginx/logs/http.log
+(tail -f -n 0 /app/vendor/nginx/logs/http.log &)
+/app/vendor/nginx/sbin/nginx -c /app/vendor/nginx/conf/nginx.conf
+EOF
+
+chmod +x run.sh
