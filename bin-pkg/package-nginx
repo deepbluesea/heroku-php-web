@@ -5,7 +5,6 @@ source $(dirname $0)/common
 NGINX_URL="http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz"
 NGINX_PREFIX="nginx-${NGINX_VERSION}"
 
-PCRE_VERSION=8.32
 PCRE_URL="ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-${PCRE_VERSION}.tar.gz"
 
 tempdir=$(make-temp-dir)
@@ -30,14 +29,35 @@ popd
 
 # build for heroku
 echo "Building ..."
-vulcan build -v -s $NGINX_PREFIX -o $tempdir/$NGINX_PREFIX.tar.gz -p /app/vendor/nginx -c \
-  "./configure --prefix=/app/vendor/nginx \
-               --with-pcre=contrib/pcre-${PCRE_VERSION} \
-               --with-http_ssl_module \
-               --with-http_gzip_static_module \
-               --with-http_stub_status_module \
-               --with-http_realip_module \
-               && make install"
+vulcan build -v -s $NGINX_PREFIX -o $tempdir/$NGINX_PREFIX.tar.gz -p ${ROOT}/vendor/nginx -c \
+    "CFLAGS=-s ./configure \
+        --prefix=${ROOT}/vendor/nginx \
+        --with-pcre=contrib/pcre-${PCRE_VERSION} \
+        --http-fastcgi-temp-path=/tmp/fastcgi \
+        --http-client-body-temp-path=/tmp/client_body \
+        --with-http_ssl_module \
+        --with-http_gzip_static_module \
+        --with-http_stub_status_module \
+        --with-http_realip_module \
+        --without-http_ssi_module \
+        --without-http_userid_module \
+        --without-http_access_module \
+        --without-http_autoindex_module \
+        --without-http_geo_module \
+        --without-http_map_module \
+        --without-http_split_clients_module \
+        --without-http_proxy_module \
+        --without-http_uwsgi_module \
+        --without-http_scgi_module \
+        --without-http_memcached_module \
+        --without-http_limit_conn_module \
+        --without-http_limit_req_module \
+        --without-http_empty_gif_module \
+        --without-http_browser_module \
+        --without-http_upstream_ip_hash_module \
+        --without-http_upstream_least_conn_module \
+        --without-http_upstream_keepalive_module \
+        && make install"
 
 echo "Uploading to S3 ..."
 s3-upload "${tempdir}/${NGINX_PREFIX}.tar.gz" "${NGINX_PREFIX}.tar.gz" $1

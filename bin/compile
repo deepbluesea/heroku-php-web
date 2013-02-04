@@ -10,7 +10,7 @@ source $BIN_DIR/../bin-pkg/config
 
 BUILD_DIR=$1
 CACHE_DIR=$2
-BASE_DIR=$BUILD_DIR
+BASE_DIR=$BUILD_DIR/heroku
 NGINX_URL="http://${S3_BUCKET}.s3.amazonaws.com/nginx-${NGINX_VERSION}.tar.gz"
 PHP_URL="http://${S3_BUCKET}.s3.amazonaws.com/php-${PHP_VERSION}.tar.gz"
 
@@ -42,19 +42,19 @@ cp -r $BIN_DIR/../etc etc
 
 echo "-----> Generating boot script"
 
-cat > run.sh <<EOF
+cat > $BASE_DIR/run <<EOF
 #!/usr/bin/env bash
 echo "Generating nginx.conf"
-erb /app/etc/nginx.conf.erb > /app/vendor/nginx/conf/nginx.conf
+erb ${ROOT}/etc/nginx.conf.erb > ${ROOT}/vendor/nginx/conf/nginx.conf
 
 echo "Starting php-fpm"
-/app/vendor/php/sbin/php-fpm -y /app/etc/php-fpm.conf -c /app/etc/php.ini
+${ROOT}/vendor/php/sbin/php-fpm -y ${ROOT}/etc/php-fpm.conf -c ${ROOT}/etc/php.ini
 
 echo "Starting nginx"
-mkdir -p client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp
-touch /app/vendor/nginx/logs/http.log
-(tail -f -n 0 /app/vendor/nginx/logs/http.log &)
-/app/vendor/nginx/sbin/nginx -c /app/vendor/nginx/conf/nginx.conf
+mkdir -p /tmp/client_body /tmp/fastcgi
+touch ${ROOT}/vendor/nginx/logs/http.log
+tail -f -n 0 ${ROOT}/vendor/nginx/logs/http.log &
+${ROOT}/vendor/nginx/sbin/nginx -c ${ROOT}/vendor/nginx/conf/nginx.conf
 EOF
 
-chmod +x run.sh
+chmod +x $BASE_DIR/run

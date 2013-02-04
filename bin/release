@@ -3,5 +3,5 @@
 cat <<EOF
 ---
 default_process_types:
-  web: sh run.sh
+  web: heroku/run
 EOF

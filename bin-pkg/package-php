@@ -18,40 +18,43 @@ tar xzf php.tar.bz2
 
 # build for heroku
 echo "Building ..."
-vulcan build -v -s $PHP_PREFIX -o $tempdir/$PHP_PREFIX.tar.gz -p /app/vendor/php -c \
-    "./configure  --prefix=/app/vendor/php \
-                  --with-pgsql \
-                  --with-pdo-pgsql \
-                  --with-iconv \
-                  --with-gd \
-                  --with-curl=/usr/lib \
-                  --with-config-file-path=/app/vendor/php \
-                  --with-openssl \
-                  --enable-fpm \
-                  --with-zlib \
-                  --enable-mbstring \
-                  --disable-debug \
-                  --disable-rpath \
-                  --enable-gd-native-ttf \
-                  --enable-inline-optimization \
-                  --with-bz2 \
-                  --enable-pcntl \
-                  --enable-mbregex \
-                  --with-mhash \
-                  --enable-zip \
-                  --with-pcre-regex \
-                  --enable-libxml \
-                  --with-gettext \
-                  --with-jpeg-dir \
-                  --with-mysqli \
-                  --with-pcre-regex \
-                  --with-png-dir \
-                  --without-pdo-sqlite \
-                  --without-sqlite3 \
-                  && make install \
-                  && /app/vendor/php/bin/pear config-set php_dir /app/vendor/php \
-                  && yes '' | /app/vendor/php/bin/pecl install memcache \
-                  && yes '' | /app/vendor/php/bin/pecl install apc-3.1.13"
+vulcan build -v -s $PHP_PREFIX -o $tempdir/$PHP_PREFIX.tar.gz -p $ROOT/vendor/php -c \
+    "CFLAGS=-s ./configure \
+        --prefix=${ROOT}/vendor/php \
+        --with-config-file-path=${ROOT}/vendor/php \
+        --enable-fpm \
+        --with-pgsql \
+        --with-pdo-pgsql \
+        --with-iconv \
+        --with-curl=/usr/lib \
+        --with-openssl \
+        --with-zlib \
+        --with-bz2 \
+        --with-pcre-regex \
+        --with-gettext \
+        --with-pcre-regex \
+        --without-cdb \
+        --disable-flatfile \
+        --disable-inifile \
+        --without-sqlite3 \
+        --without-pdo-sqlite \
+        --enable-zip \
+        --enable-mbstring \
+        --enable-mbregex \
+        --enable-inline-optimization \
+        --enable-libxml \
+        --disable-debug \
+        --disable-rpath \
+        --disable-cgi \
+        && make install \
+        && ${ROOT}/vendor/php/bin/pear config-set php_dir ${ROOT}/php \
+        && yes '' | ${ROOT}/vendor/php/bin/pecl install memcache \
+        && yes '' | ${ROOT}/vendor/php/bin/pecl install apc-3.1.13"
+
+        # --with-gd \
+        # --enable-gd-native-ttf \
+        # --with-jpeg-dir \
+        # --with-png-dir \
 
 echo "Uploading to S3 ..."
 s3-upload "${tempdir}/${PHP_PREFIX}.tar.gz" "${PHP_PREFIX}.tar.gz" $1
