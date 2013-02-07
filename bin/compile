@@ -22,11 +22,22 @@ echo "Copying configuration" | heroku-notice
 rm -rf ${BUILD_ROOT}/etc
 cp -r ${BUILDPACK_ROOT}/etc ${BUILD_ROOT}/etc
 
+if [ -f "${1}/composer.json" ]; then
+    echo "Installing composer dependencies" | heroku-notice
+    echo "Downloading composer binary" | heroku-indent
+    curl -s "http://getcomposer.org/composer.phar" -o composer.phar
+    COMPOSER="$(pwd)/composer.phar"
+    pushd $1 > /dev/null
+    ${PHP_ROOT}/bin/php $COMPOSER install | heroku-indent
+    popd > /dev/null
+fi
+
 echo "Generating boot script" | heroku-notice
 
-DEPLOY_ROOT=$(heroku-dir)
+# Reset roots to production paths for script generation ...
 PHP_ROOT=$(heroku-vendor-dir php)
 NGINX_ROOT=$(heroku-vendor-dir nginx)
+DEPLOY_ROOT=$(heroku-dir)
 
 cat > ${BUILD_ROOT}/start-web <<EOF
 #!/usr/bin/env bash
