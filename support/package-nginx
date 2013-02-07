@@ -1,37 +1,27 @@
 #!/bin/bash
 set -e
-source $(dirname $0)/common
+set -o pipefail
 
-NGINX_URL="http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz"
+BUILDPACK_ROOT=$(cd $(dirname "$0")/..; pwd)
+for filename in $BUILDPACK_ROOT/lib/*.bash; do source $filename; done
+
+DEPLOY_ROOT=$(heroku-dir)
+NGINX_ROOT=$(heroku-vendor-dir nginx)
 NGINX_PREFIX="nginx-${NGINX_VERSION}"
 
-PCRE_URL="ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-${PCRE_VERSION}.tar.gz"
+temp-dir-start
 
-tempdir=$(make-temp-dir)
-cd $tempdir
+echo "Preparing" | heroku-notice
+echo "Downloading nginx v${NGINX_VERSION} source" | heroku-indent
+url-download "http://nginx.org/download/${NGINX_PREFIX}.tar.gz" $(pwd)
 
-echo "Working directory: ${tempdir}"
-echo
+echo "Downloading pcre v${PCRE_VERSION} source" | heroku-indent
+url-download "ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-${PCRE_VERSION}.tar.gz" ${NGINX_PREFIX}/contrib
 
-# Download and unpack nginx ...
-echo "Downloading nginx v${NGINX_VERSION} ..."
-curl ${NGINX_URL} -o nginx.tar.gz
-echo
-tar xzf nginx.tar.gz
-
-# Download and unpack 
-pushd ${NGINX_PREFIX}/contrib
-echo "Downloading pcre v${PCRE_VERSION} ..."
-curl $PCRE_URL -o pcre.tar.gz
-echo
-tar zxf pcre.tar.gz
-popd
-
-# build for heroku
-echo "Building ..."
-vulcan build -v -s $NGINX_PREFIX -o $tempdir/$NGINX_PREFIX.tar.gz -p ${ROOT}/vendor/nginx -c \
+echo "Compiling" | heroku-notice
+vulcan build -v -s $NGINX_PREFIX -o ${NGINX_PREFIX}.tar.gz -p $NGINX_ROOT -c \
     "CFLAGS=-s ./configure \
-        --prefix=${ROOT}/vendor/nginx \
+        --prefix=${NGINX_ROOT} \
         --with-pcre=contrib/pcre-${PCRE_VERSION} \
         --http-fastcgi-temp-path=/tmp/fastcgi \
         --http-client-body-temp-path=/tmp/client_body \
@@ -57,10 +47,9 @@ vulcan build -v -s $NGINX_PREFIX -o $tempdir/$NGINX_PREFIX.tar.gz -p ${ROOT}/ven
         --without-http_upstream_ip_hash_module \
         --without-http_upstream_least_conn_module \
         --without-http_upstream_keepalive_module \
-        && make install"
+    && make install" | heroku-indent
 
-echo "Uploading to S3 ..."
-s3-upload "${tempdir}/${NGINX_PREFIX}.tar.gz" "${NGINX_PREFIX}.tar.gz" $1
+echo "Uploading ${NGINX_PREFIX}.tar.gz to Amazon S3" | heroku-notice
+s3-upload "${NGINX_PREFIX}.tar.gz" "${NGINX_PREFIX}.tar.gz" $1
 
-echo "Cleaning up ..."
-rm -rf $tempdir
+temp-dir-end

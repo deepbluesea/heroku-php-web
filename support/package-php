@@ -1,0 +1,58 @@
+#!/bin/bash
+set -e
+set -o pipefail
+
+BUILDPACK_ROOT=$(cd $(dirname "$0")/..; pwd)
+for filename in $BUILDPACK_ROOT/lib/*.bash; do source $filename; done
+
+DEPLOY_ROOT=$(heroku-dir)
+PHP_ROOT=$(heroku-vendor-dir php)
+PHP_PREFIX="php-${PHP_VERSION}"
+
+temp-dir-start
+
+echo "Preparing" | heroku-notice
+echo "Downloading php v${PHP_VERSION} source" | heroku-indent
+url-download "http://www.php.net/get/${PHP_PREFIX}.tar.bz2/from/au1.php.net/mirror" $(pwd)
+
+echo "Pruning tests" | heroku-indent
+find $PHP_PREFIX -name tests | xargs rm -rf
+
+echo "Compiling" | heroku-notice
+vulcan build -v -s ${PHP_PREFIX} -o ${PHP_PREFIX}.tar.gz -p $PHP_ROOT -c \
+    "CFLAGS=-s ./configure \
+        --prefix=${PHP_ROOT} \
+        --with-config-file-path=${PHP_ROOT} \
+        --enable-fpm \
+        --with-pgsql \
+        --with-pdo-pgsql \
+        --with-iconv \
+        --with-curl=/usr/lib \
+        --with-openssl \
+        --with-zlib \
+        --with-bz2 \
+        --with-pcre-regex \
+        --with-gettext \
+        --with-pcre-regex \
+        --without-cdb \
+        --disable-flatfile \
+        --disable-inifile \
+        --without-sqlite3 \
+        --without-pdo-sqlite \
+        --enable-zip \
+        --enable-mbstring \
+        --enable-mbregex \
+        --enable-inline-optimization \
+        --enable-libxml \
+        --disable-debug \
+        --disable-rpath \
+        --disable-cgi \
+    && make install \
+    && ${PHP_ROOT}/bin/pear config-set php_dir ${PHP_ROOT} \
+    && yes '' | ${PHP_ROOT}/bin/pecl install memcache \
+    && yes '' | ${PHP_ROOT}/bin/pecl install apc-3.1.13" | heroku-indent
+
+echo "Uploading ${PHP_PREFIX}.tar.gz to Amazon S3" | heroku-notice
+s3-upload "${PHP_PREFIX}.tar.gz" "${PHP_PREFIX}.tar.gz" $1
+
+temp-dir-end

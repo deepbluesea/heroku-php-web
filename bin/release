@@ -1,7 +1,10 @@
 #!/bin/bash
 
+BUILDPACK_ROOT=$(cd $(dirname "$0")/..; pwd)
+for filename in $BUILDPACK_ROOT/lib/*.bash; do source $filename; done
+
 cat <<EOF
 ---
 default_process_types:
-  web: heroku/run
+  web: $(heroku-dir)/start-web
 EOF

@@ -32,7 +32,7 @@ http {
 
         location @app {
             include         fastcgi_params;
-            fastcgi_param   SCRIPT_FILENAME /app/bin/heroku-nginx.php;
+            fastcgi_param   SCRIPT_FILENAME /app/bin/heroku;
             fastcgi_pass    unix:/tmp/php-fpm.socket;
         }
     }

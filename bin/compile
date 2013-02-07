@@ -2,59 +2,47 @@
 set -e
 set -o pipefail
 
-pushd $(dirname $0) > /dev/null
-BIN_DIR=$(pwd)
-popd > /dev/null
+BUILDPACK_ROOT=$(cd $(dirname "$0")/..; pwd)
+for filename in $BUILDPACK_ROOT/lib/*.bash; do source $filename; done
 
-source $BIN_DIR/../bin-pkg/config
+BUILD_ROOT=$(heroku-dir $1)
+PHP_ROOT=$(heroku-vendor-dir php $1)
+NGINX_ROOT=$(heroku-vendor-dir nginx $1)
 
-BUILD_DIR=$1
-CACHE_DIR=$2
-BASE_DIR=$BUILD_DIR/heroku
-NGINX_URL="http://${S3_BUCKET}.s3.amazonaws.com/nginx-${NGINX_VERSION}.tar.gz"
-PHP_URL="http://${S3_BUCKET}.s3.amazonaws.com/php-${PHP_VERSION}.tar.gz"
+mkdir -p $BUILD_ROOT
 
-mkdir -p $BASE_DIR
+echo 'Downloading dependencies' | heroku-notice
+echo "php v${PHP_VERSION}" | heroku-indent
+s3-download php $PHP_VERSION $PHP_ROOT
 
-# PHP ...
-cd $BASE_DIR
-if [ ! -d ./vendor/php ]; then
-    echo "-----> Installing php v${PHP_VERSION}"
-    mkdir -p ./vendor/php
-    cd ./vendor/php
-    curl -s --max-time 160 --location $PHP_URL | tar xz
-fi
+echo "nginx v${NGINX_VERSION}" | heroku-indent
+s3-download nginx $NGINX_VERSION $NGINX_ROOT
 
-# NGINX ...
-cd $BASE_DIR
-if [ ! -d ./vendor/nginx ]; then
-    echo "-----> Installing nginx v${NGINX_VERSION}"
-    mkdir -p ./vendor/nginx
-    cd ./vendor/nginx
-    curl -s --max-time 60 --location $NGINX_URL | tar xz
-fi
+echo "Copying configuration" | heroku-notice
+rm -rf ${BUILD_ROOT}/etc
+cp -r ${BUILDPACK_ROOT}/etc ${BUILD_ROOT}/etc
 
-# Assets ...
-cd $BASE_DIR
-echo "-----> Copying configuration"
-rm -rf ./etc
-cp -r $BIN_DIR/../etc etc
+echo "Generating boot script" | heroku-notice
 
-echo "-----> Generating boot script"
+DEPLOY_ROOT=$(heroku-dir)
+PHP_ROOT=$(heroku-vendor-dir php)
+NGINX_ROOT=$(heroku-vendor-dir nginx)
 
-cat > $BASE_DIR/run <<EOF
+cat > ${BUILD_ROOT}/start-web <<EOF
 #!/usr/bin/env bash
-echo "Generating nginx.conf"
-erb ${ROOT}/etc/nginx.conf.erb > ${ROOT}/vendor/nginx/conf/nginx.conf
-
-echo "Starting php-fpm"
-${ROOT}/vendor/php/sbin/php-fpm -y ${ROOT}/etc/php-fpm.conf -c ${ROOT}/etc/php.ini
-
-echo "Starting nginx"
+echo "Preparing filesystem ..."
+touch ${NGINX_ROOT}/logs/http.log
 mkdir -p /tmp/client_body /tmp/fastcgi
-touch ${ROOT}/vendor/nginx/logs/http.log
-tail -f -n 0 ${ROOT}/vendor/nginx/logs/http.log &
-${ROOT}/vendor/nginx/sbin/nginx -c ${ROOT}/vendor/nginx/conf/nginx.conf
+
+echo "Generating nginx.conf ..."
+erb ${DEPLOY_ROOT}/etc/nginx.conf.erb > ${NGINX_ROOT}/conf/nginx.conf
+
+echo "Starting php-fpm ${PHP_VERSION}..."
+${PHP_ROOT}/sbin/php-fpm -y ${DEPLOY_ROOT}/etc/php-fpm.conf -c ${DEPLOY_ROOT}/etc/php.ini
+
+echo "Starting nginx ${NGINX_VERSION}..."
+tail -f -n 0 ${NGINX_ROOT}/logs/http.log &
+${NGINX_ROOT}/sbin/nginx -c ${NGINX_ROOT}/conf/nginx.conf
 EOF
 
-chmod +x $BASE_DIR/run
+chmod +x $BUILD_ROOT/start-web
