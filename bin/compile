@@ -40,13 +40,15 @@ RUNTIME_HEROKU_DIR=$(heroku-dir)                # The path in which buildpack co
 
 cat > ${HEROKU_DIR}/start-web <<EOF
 #!/usr/bin/env bash
+set -e
+
 echo "Preparing environment ..."
 export PATH="${RUNTIME_PHP_DIR}/bin:${RUNTIME_PHP_DIR}/sbin:${RUNTIME_NGINX_DIR}/sbin:\$PATH"
 touch ${RUNTIME_NGINX_DIR}/logs/http.log
 mkdir -p /tmp/client_body /tmp/fastcgi
 
 echo "Generating nginx.conf ..."
-php ${RUNTIME_NGINX_DIR}/etc/nginx.conf.php > ${RUNTIME_NGINX_DIR}/conf/nginx.conf
+php ${RUNTIME_HEROKU_DIR}/etc/nginx.conf.php > ${RUNTIME_NGINX_DIR}/conf/nginx.conf
 
 echo "Starting php-fpm ${PHP_VERSION}..."
 php-fpm -y ${RUNTIME_HEROKU_DIR}/etc/php-fpm.conf -c ${RUNTIME_HEROKU_DIR}/etc/php.ini
