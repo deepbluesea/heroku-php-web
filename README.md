@@ -16,5 +16,5 @@ On an existing Heroku app:
 
  * **/**
     * **public/** - Any content in this folder will be served statically
-    * **bin/heroku*** - Any requests that do not match a file in **public/** are routed to this PHP script
+    * **bin/heroku** - Any requests that do not match a file in **public/** are routed to this PHP script
     * **composer.json** - If a composer.json file is present, non-development composer dependencies will be installed
