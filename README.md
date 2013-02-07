@@ -22,6 +22,8 @@ On an existing Heroku app:
 
 ### Heroku hooks
 
- * **/bin/heroku-hooks/compile-start** - Executed before slug compilation is started (PHP is not available)
- * **/bin/heroku-hooks/compile-complete** - Executed after slug compilation (PHP and all Composer dependencies has been installed)
- * **/bin/heroku-hooks/compile-complete** - Executed before Nginx and PHP-FPM are started.
+If any of the following files are present they are executed at the appropriate point: 
+
+ * **/bin/heroku-hooks/compile-start**    - Before slug compilation is started; PHP not available
+ * **/bin/heroku-hooks/compile-complete** - After slug compilation; PHP Composer dependencies installed
+ * **/bin/heroku-hooks/compile-complete** - Before Nginx and PHP-FPM are started
