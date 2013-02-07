@@ -11,6 +11,11 @@ HEROKU_DIR=$(heroku-dir $REPO_DIR)              # The path in which buildpack co
 PHP_DIR=$(heroku-vendor-dir php $REPO_DIR)      # The path to which PHP is installed during the build.
 NGINX_DIR=$(heroku-vendor-dir nginx $REPO_DIR)  # The path to which Nginx is installed during the build.
 
+if [ -f ${REPO_DIR}/bin/heroku-hooks/compile-start ]; then
+    echo "Executing compile-start hook" | heroku-notice
+    ${REPO_DIR}/bin/heroku-hooks/compile-start $REPO_DIR | heroku-indent
+fi
+
 echo 'Downloading dependencies' | heroku-notice
 echo "php v${PHP_VERSION}" | heroku-indent
 s3-download php $PHP_VERSION $PHP_DIR
@@ -42,20 +47,30 @@ cat > ${HEROKU_DIR}/start-web <<EOF
 #!/usr/bin/env bash
 set -e
 
-echo "Preparing environment ..."
+echo "Preparing environment"
 export PATH="${RUNTIME_PHP_DIR}/bin:${RUNTIME_PHP_DIR}/sbin:${RUNTIME_NGINX_DIR}/sbin:\$PATH"
 touch ${RUNTIME_NGINX_DIR}/logs/http.log
 mkdir -p /tmp/client_body /tmp/fastcgi
 
-echo "Generating nginx.conf ..."
+echo "Generating nginx.conf"
 php ${RUNTIME_HEROKU_DIR}/etc/nginx.conf.php > ${RUNTIME_NGINX_DIR}/conf/nginx.conf
 
-echo "Starting php-fpm ${PHP_VERSION}..."
+if [ -f bin/heroku-hooks/dyno-start ]; then
+    echo "Executing dyno-start hook"
+    bin/heroku-hooks/dyno-start
+fi
+
+echo "Starting php-fpm ${PHP_VERSION}"
 php-fpm -y ${RUNTIME_HEROKU_DIR}/etc/php-fpm.conf -c ${RUNTIME_HEROKU_DIR}/etc/php.ini
 
-echo "Starting nginx ${NGINX_VERSION}..."
+echo "Starting nginx ${NGINX_VERSION}"
 tail -f -n 0 ${RUNTIME_NGINX_DIR}/logs/http.log &
 nginx -c ${RUNTIME_NGINX_DIR}/conf/nginx.conf
 EOF
 
 chmod +x ${HEROKU_DIR}/start-web
+
+if [ -f ${REPO_DIR}/bin/heroku-hooks/compile-complete ]; then
+    echo "Executing compile-complete hook" | heroku-notice
+    ${REPO_DIR}/bin/heroku-hooks/compile-complete $REPO_DIR | heroku-indent
+fi
