@@ -46,10 +46,10 @@ touch ${RUNTIME_NGINX_DIR}/logs/http.log
 mkdir -p /tmp/client_body /tmp/fastcgi
 
 echo "Generating nginx.conf ..."
-php ${HEROKU_DIR_RUNTIME}/etc/nginx.conf.php > ${RUNTIME_NGINX_DIR}/conf/nginx.conf
+php ${RUNTIME_NGINX_DIR}/etc/nginx.conf.php > ${RUNTIME_NGINX_DIR}/conf/nginx.conf
 
 echo "Starting php-fpm ${PHP_VERSION}..."
-php-fpm -y ${HEROKU_DIR_RUNTIME}/etc/php-fpm.conf -c ${HEROKU_DIR_RUNTIME}/etc/php.ini
+php-fpm -y ${RUNTIME_HEROKU_DIR}/etc/php-fpm.conf -c ${RUNTIME_HEROKU_DIR}/etc/php.ini
 
 echo "Starting nginx ${NGINX_VERSION}..."
 tail -f -n 0 ${RUNTIME_NGINX_DIR}/logs/http.log &
