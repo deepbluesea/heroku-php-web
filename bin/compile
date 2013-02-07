@@ -2,58 +2,58 @@
 set -e
 set -o pipefail
 
+# Include common library ...
 BUILDPACK_ROOT=$(cd $(dirname "$0")/..; pwd)
-for filename in $BUILDPACK_ROOT/lib/*.bash; do source $filename; done
+for filename in ${BUILDPACK_ROOT}/lib/*.bash; do source $filename; done
 
-BUILD_ROOT=$(heroku-dir $1)
-PHP_ROOT=$(heroku-vendor-dir php $1)
-NGINX_ROOT=$(heroku-vendor-dir nginx $1)
-
-mkdir -p $BUILD_ROOT
+REPO_DIR=$1                                     # The path to the app's Git repository.
+HEROKU_DIR=$(heroku-dir $REPO_DIR)              # The path in which buildpack content is installed.
+PHP_DIR=$(heroku-vendor-dir php $REPO_DIR)      # The path to which PHP is installed during the build.
+NGINX_DIR=$(heroku-vendor-dir nginx $REPO_DIR)  # The path to which Nginx is installed during the build.
 
 echo 'Downloading dependencies' | heroku-notice
 echo "php v${PHP_VERSION}" | heroku-indent
-s3-download php $PHP_VERSION $PHP_ROOT
+s3-download php $PHP_VERSION $PHP_DIR
 
 echo "nginx v${NGINX_VERSION}" | heroku-indent
-s3-download nginx $NGINX_VERSION $NGINX_ROOT
+s3-download nginx $NGINX_VERSION $NGINX_DIR
 
 echo "Copying configuration" | heroku-notice
-rm -rf ${BUILD_ROOT}/etc
-cp -r ${BUILDPACK_ROOT}/etc ${BUILD_ROOT}/etc
+rm -rf ${HEROKU_DIR}/etc
+cp -r ${BUILDPACK_ROOT}/etc ${HEROKU_DIR}/etc
 
-if [ -f "${1}/composer.json" ]; then
+if [ -f "${REPO_DIR}/composer.json" ]; then
     echo "Installing composer dependencies" | heroku-notice
     echo "Downloading composer binary" | heroku-indent
     curl -s "http://getcomposer.org/composer.phar" -o composer.phar
     COMPOSER="$(pwd)/composer.phar"
-    pushd $1 > /dev/null
-    ${PHP_ROOT}/bin/php $COMPOSER install --optimize-autoloader | heroku-indent
+    pushd $REPO_DIR > /dev/null
+    ${PHP_DIR}/bin/php $COMPOSER install --optimize-autoloader | heroku-indent
     popd > /dev/null
 fi
 
 echo "Generating boot script" | heroku-notice
 
-# Reset roots to production paths for script generation ...
-PHP_ROOT=$(heroku-vendor-dir php)
-NGINX_ROOT=$(heroku-vendor-dir nginx)
-DEPLOY_ROOT=$(heroku-dir)
+RUNTIME_PHP_DIR=$(heroku-vendor-dir php)        # The path in which PHP is installed at dyno-run-time.
+RUNTIME_NGINX_DIR=$(heroku-vendor-dir nginx)    # The path in which Nginx is installed at dyno-run-time.
+RUNTIME_HEROKU_DIR=$(heroku-dir)                # The path in which buildpack content is installed.
 
-cat > ${BUILD_ROOT}/start-web <<EOF
+cat > ${RUNTIME_HEROKU_DIR}/start-web <<EOF
 #!/usr/bin/env bash
-echo "Preparing filesystem ..."
-touch ${NGINX_ROOT}/logs/http.log
+echo "Preparing environment ..."
+export PATH="${RUNTIME_PHP_DIR}/bin:${RUNTIME_PHP_DIR}/sbin:${RUNTIME_NGINX_DIR}/sbin:\$PATH"
+touch ${RUNTIME_NGINX_DIR}/logs/http.log
 mkdir -p /tmp/client_body /tmp/fastcgi
 
 echo "Generating nginx.conf ..."
-${PHP_ROOT}/bin/php ${DEPLOY_ROOT}/etc/nginx.conf.php > ${NGINX_ROOT}/conf/nginx.conf
+php ${HEROKU_DIR_RUNTIME}/etc/nginx.conf.php > ${RUNTIME_NGINX_DIR}/conf/nginx.conf
 
 echo "Starting php-fpm ${PHP_VERSION}..."
-${PHP_ROOT}/sbin/php-fpm -y ${DEPLOY_ROOT}/etc/php-fpm.conf -c ${DEPLOY_ROOT}/etc/php.ini
+php-fpm -y ${HEROKU_DIR_RUNTIME}/etc/php-fpm.conf -c ${HEROKU_DIR_RUNTIME}/etc/php.ini
 
 echo "Starting nginx ${NGINX_VERSION}..."
-tail -f -n 0 ${NGINX_ROOT}/logs/http.log &
-${NGINX_ROOT}/sbin/nginx -c ${NGINX_ROOT}/conf/nginx.conf
+tail -f -n 0 ${RUNTIME_NGINX_DIR}/logs/http.log &
+nginx -c ${RUNTIME_NGINX_DIR}/conf/nginx.conf
 EOF
 
-chmod +x $BUILD_ROOT/start-web
+chmod +x ${RUNTIME_HEROKU_DIR}/start-web

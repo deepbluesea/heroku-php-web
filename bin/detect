@@ -1,8 +1,9 @@
 #!/bin/bash
 
 if [ -f $1/bin/heroku ]; then
-  echo "Icecave Studios PHP"
-  exit 0
+    echo "Icecave Studios PHP"
+    exit 0
 else
-  exit 1
+    echo "There must be a PHP file named bin/heroku!"
+    exit 1
 fi
