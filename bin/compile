@@ -28,7 +28,7 @@ if [ -f "${1}/composer.json" ]; then
     curl -s "http://getcomposer.org/composer.phar" -o composer.phar
     COMPOSER="$(pwd)/composer.phar"
     pushd $1 > /dev/null
-    ${PHP_ROOT}/bin/php $COMPOSER install | heroku-indent
+    ${PHP_ROOT}/bin/php $COMPOSER install --optimize-autoloader | heroku-indent
     popd > /dev/null
 fi
 
@@ -46,7 +46,7 @@ touch ${NGINX_ROOT}/logs/http.log
 mkdir -p /tmp/client_body /tmp/fastcgi
 
 echo "Generating nginx.conf ..."
-erb ${DEPLOY_ROOT}/etc/nginx.conf.erb > ${NGINX_ROOT}/conf/nginx.conf
+${PHP_ROOT}/bin/php ${DEPLOY_ROOT}/etc/nginx.conf.php > ${NGINX_ROOT}/conf/nginx.conf
 
 echo "Starting php-fpm ${PHP_VERSION}..."
 ${PHP_ROOT}/sbin/php-fpm -y ${DEPLOY_ROOT}/etc/php-fpm.conf -c ${DEPLOY_ROOT}/etc/php.ini

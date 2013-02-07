@@ -16,7 +16,7 @@ http {
     error_log  /app/heroku/vendor/nginx/logs/http.log;
 
     server {
-        listen          <%= ENV['PORT'] %>;
+        listen          <?php echo $_SERVER['PORT']; ?>;
         server_name     localhost;
         root            /app/public;
 
