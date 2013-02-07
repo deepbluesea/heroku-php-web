@@ -38,7 +38,7 @@ RUNTIME_PHP_DIR=$(heroku-vendor-dir php)        # The path in which PHP is insta
 RUNTIME_NGINX_DIR=$(heroku-vendor-dir nginx)    # The path in which Nginx is installed at dyno-run-time.
 RUNTIME_HEROKU_DIR=$(heroku-dir)                # The path in which buildpack content is installed.
 
-cat > ${RUNTIME_HEROKU_DIR}/start-web <<EOF
+cat > ${HEROKU_DIR}/start-web <<EOF
 #!/usr/bin/env bash
 echo "Preparing environment ..."
 export PATH="${RUNTIME_PHP_DIR}/bin:${RUNTIME_PHP_DIR}/sbin:${RUNTIME_NGINX_DIR}/sbin:\$PATH"
@@ -56,4 +56,4 @@ tail -f -n 0 ${RUNTIME_NGINX_DIR}/logs/http.log &
 nginx -c ${RUNTIME_NGINX_DIR}/conf/nginx.conf
 EOF
 
-chmod +x ${RUNTIME_HEROKU_DIR}/start-web
+chmod +x ${HEROKU_DIR}/start-web
