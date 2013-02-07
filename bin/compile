@@ -23,6 +23,8 @@ s3-download php $PHP_VERSION $PHP_DIR
 echo "nginx v${NGINX_VERSION}" | heroku-indent
 s3-download nginx $NGINX_VERSION $NGINX_DIR
 
+export PATH="${PHP_DIR}/bin:${PHP_DIR}/sbin:${NGINX_DIR}/sbin:${PATH}"
+
 echo "Copying configuration" | heroku-notice
 rm -rf ${HEROKU_DIR}/etc
 cp -r ${BUILDPACK_ROOT}/etc ${HEROKU_DIR}/etc
