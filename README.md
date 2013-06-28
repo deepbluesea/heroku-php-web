@@ -6,11 +6,11 @@ This is a custom Heroku buildpack providing an Nginx server dispatching to PHP-F
 
 On a new Heroku app:
 
-    $ heroku create <app-name> --buildpack https://github.com/IcecaveStudios/heroku-php-web.git
+    $ heroku create <app-name> --buildpack https://github.com/jmalloc/heroku-php-web.git
 
 On an existing Heroku app:
 
-    $ heroku config:set BUILDPACK_URL=https://github.com/IcecaveStudios/heroku-php-web.git
+    $ heroku config:set BUILDPACK_URL=https://github.com/jmalloc/heroku-php-web.git
 
 ## Application structure
 
