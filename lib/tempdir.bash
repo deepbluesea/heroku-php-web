@@ -1,6 +1,6 @@
 function temp-dir-start
 {
-    dir=$(mktemp -t heroku-temp)
+    dir=$(mktemp -t heroku-temp.XXX)
     rm -rf $dir
     mkdir -p $dir
     pushd $dir > /dev/null

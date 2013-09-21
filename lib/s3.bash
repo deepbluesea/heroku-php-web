@@ -18,16 +18,17 @@ function s3-upload
     }
     "
 
-    local policy="$(echo -n ${policy_source} | base64)"
-    local signature="$(echo -n ${policy} | openssl dgst -sha1 -binary -hmac ${password} | base64)"
+    local policy="$(echo -n ${policy_source} | base64 | tr -d '\n')"
+    local signature="$(echo -n ${policy} | openssl dgst -sha1 -binary -hmac ${password} | base64 | tr -d '\n')"
 
-    curl "http://${S3_BUCKET}.s3.amazonaws.com" \
+    curl \
         -F "AWSAccessKeyId=${S3_ACCESS_ID}" \
         -F "policy=${policy}" \
         -F "signature=${signature}" \
         -F "acl=public-read" \
         -F "key=${target}" \
-        -F "file=@${source}"
+        -F "file=@${source}" \
+         "http://${S3_BUCKET}.s3.amazonaws.com"
 }
 
 function s3-download

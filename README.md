@@ -22,8 +22,8 @@ On an existing Heroku app:
 
 ### Heroku hooks
 
-If any of the following files are present they are executed at the appropriate point: 
+If any of the following files are present they are executed at the appropriate point:
 
- * **/bin/heroku-hooks/compile-start**    - Before slug compilation is started; PHP not available
+ * **/bin/heroku-hooks/compile-start** - Before slug compilation is started; PHP not available
  * **/bin/heroku-hooks/compile-complete** - After slug compilation; PHP Composer dependencies installed
  * **/bin/heroku-hooks/dyno-start** - Before Nginx and PHP-FPM are started

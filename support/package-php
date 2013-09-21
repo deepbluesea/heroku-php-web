@@ -13,7 +13,7 @@ temp-dir-start
 
 echo "Preparing" | heroku-notice
 echo "Downloading php v${PHP_VERSION} source" | heroku-indent
-url-download "http://www.php.net/get/${PHP_PREFIX}.tar.bz2/from/au1.php.net/mirror" $(pwd)
+url-download "http://php.net/get/${PHP_PREFIX}.tar.gz/from/this/mirror" $(pwd)
 
 echo "Pruning tests" | heroku-indent
 find $PHP_PREFIX -name tests | xargs rm -rf
@@ -49,8 +49,7 @@ vulcan build -v -s ${PHP_PREFIX} -o ${PHP_PREFIX}.tar.gz -p $PHP_ROOT -c \
         --disable-cgi \
     && make install \
     && ${PHP_ROOT}/bin/pear config-set php_dir ${PHP_ROOT} \
-    && yes '' | ${PHP_ROOT}/bin/pecl install memcache \
-    && yes '' | ${PHP_ROOT}/bin/pecl install apc-3.1.13" | heroku-indent
+    && yes '' | ${PHP_ROOT}/bin/pecl install memcache" | heroku-indent
 
 echo "Uploading ${PHP_PREFIX}.tar.gz to Amazon S3" | heroku-notice
 s3-upload "${PHP_PREFIX}.tar.gz" "${PHP_PREFIX}.tar.gz" $1
