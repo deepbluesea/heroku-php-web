@@ -21,10 +21,17 @@ On an existing Heroku app:
 ### PHP
 
   - `web/` - Any content in this folder will be served statically.
-  - `bin/heroku` - Any requests that do not match a file in **web/** are routed
+  - `bin/heroku` - Any requests that do not match a file in `web/` are routed
     to this PHP script. Executable permissions are not required.
   - `composer.json` - If present, non-development Composer dependencies will be
     installed.
+  - `etc/` - Any configuration files in this folder will supplement or override
+    the files supplied in this buildpack.
+    - `php/php.ini` - The primary PHP configuration file.
+    - `php/conf.d/` - Directory for additional PHP configuration files. Any file
+      ending in `.ini` will be parsed.
+    - `nginx.conf` - The Nginx configuration file.
+    - `php-fpm.conf` - The PHP-FPM configuration file.
 
 ### Heroku hooks
 

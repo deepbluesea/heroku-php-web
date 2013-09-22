@@ -27,10 +27,8 @@ export PATH="${PHP_DIR}/bin:${PHP_DIR}/sbin:${NGINX_DIR}/sbin:${PATH}"
 
 echo "Copying configuration" | heroku-notice
 rm -rf ${HEROKU_DIR}/etc
-cp -vrT ${BUILDPACK_ROOT}/etc ${HEROKU_DIR}/etc
-if [ -d "${REPO_DIR}/etc" ]; then cp -vrT ${REPO_DIR}/etc ${HEROKU_DIR}/etc; fi
-
-php -i
+cp -rT ${BUILDPACK_ROOT}/etc ${HEROKU_DIR}/etc
+if [ -d "${REPO_DIR}/etc" ]; then cp -rT ${REPO_DIR}/etc ${HEROKU_DIR}/etc; fi
 
 if [ -f "${REPO_DIR}/composer.json" ]; then
     echo "Installing composer dependencies" | heroku-notice
