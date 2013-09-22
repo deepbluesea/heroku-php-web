@@ -3,7 +3,7 @@ set -e
 set -o pipefail
 
 BUILDPACK_ROOT=$(cd $(dirname "$0")/..; pwd)
-for filename in $BUILDPACK_ROOT/lib/*.bash; do source $filename; done
+for filename in $(find ${BUILDPACK_ROOT}/lib/*.bash); do source $filename; done
 
 DEPLOY_ROOT=$(heroku-dir)
 NGINX_ROOT=$(heroku-vendor-dir nginx)

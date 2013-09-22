@@ -16,19 +16,21 @@ if [ -f ${REPO_DIR}/bin/heroku-hooks/compile-start ]; then
     ${REPO_DIR}/bin/heroku-hooks/compile-start $REPO_DIR | heroku-indent
 fi
 
-export PATH="${PHP_DIR}/bin:${PHP_DIR}/sbin:${NGINX_DIR}/sbin:${PATH}"
-
-echo "Copying configuration" | heroku-notice
-rm -rf ${HEROKU_DIR}/etc
-cp -vrT ${BUILDPACK_ROOT}/etc ${HEROKU_DIR}/etc
-# if [ -d "${REPO_DIR}/etc" ]; then cp -vrT ${REPO_DIR}/etc ${HEROKU_DIR}/etc; fi
-
 echo 'Downloading dependencies' | heroku-notice
 echo "php v${PHP_VERSION}" | heroku-indent
 s3-download php $PHP_VERSION $PHP_DIR
 
 echo "nginx v${NGINX_VERSION}" | heroku-indent
 s3-download nginx $NGINX_VERSION $NGINX_DIR
+
+export PATH="${PHP_DIR}/bin:${PHP_DIR}/sbin:${NGINX_DIR}/sbin:${PATH}"
+
+echo "Copying configuration" | heroku-notice
+rm -rf ${HEROKU_DIR}/etc
+cp -vrT ${BUILDPACK_ROOT}/etc ${HEROKU_DIR}/etc
+if [ -d "${REPO_DIR}/etc" ]; then cp -vrT ${REPO_DIR}/etc ${HEROKU_DIR}/etc; fi
+
+php -i
 
 if [ -f "${REPO_DIR}/composer.json" ]; then
     echo "Installing composer dependencies" | heroku-notice
