@@ -20,8 +20,8 @@ export PATH="${PHP_DIR}/bin:${PHP_DIR}/sbin:${NGINX_DIR}/sbin:${PATH}"
 
 echo "Copying configuration" | heroku-notice
 rm -rf ${HEROKU_DIR}/etc
-cp -r ${BUILDPACK_ROOT}/etc ${HEROKU_DIR}/etc
-if [ -d "${REPO_DIR}/etc" ]; then cp -r ${REPO_DIR}/etc ${HEROKU_DIR}/etc; fi
+cp -vrT ${BUILDPACK_ROOT}/etc ${HEROKU_DIR}/etc
+if [ -d "${REPO_DIR}/etc" ]; then cp -vrT ${REPO_DIR}/etc ${HEROKU_DIR}/etc; fi
 
 echo 'Downloading dependencies' | heroku-notice
 echo "php v${PHP_VERSION}" | heroku-indent
