@@ -11,6 +11,7 @@ http {
     sendfile            on;
     gzip                on;
     keepalive_timeout   30;
+    server_tokens       off;
 
     access_log /app/heroku/vendor/nginx/logs/http.log;
     error_log  /app/heroku/vendor/nginx/logs/http.log;

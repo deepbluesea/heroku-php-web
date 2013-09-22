@@ -1,7 +1,10 @@
 # Heroku PHP web server buildpack
 
 This is a custom Heroku buildpack providing an [Nginx] web server dispatching to
-[PHP-FPM], with [Composer] integration.
+[PHP-FPM], with [Composer] integration. For the current software versions, see
+[versions.bash].
+
+If the web server is not required, use [jmalloc/heroku-php] instead.
 
 ## Installation
 
@@ -37,5 +40,7 @@ point:
 <!-- References -->
 
 [Composer]: http://getcomposer.org/
+[jmalloc/heroku-php]: https://github.com/jmalloc/heroku-php
 [PHP-FPM]: http://php-fpm.org/
 [Nginx]: http://nginx.org/
+[versions.bash]: lib/versions.bash

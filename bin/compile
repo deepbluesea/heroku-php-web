@@ -4,7 +4,7 @@ set -o pipefail
 
 # Include common library ...
 BUILDPACK_ROOT=$(cd $(dirname "$0")/..; pwd)
-for filename in ${BUILDPACK_ROOT}/lib/*.bash; do source $filename; done
+for filename in $(find ${BUILDPACK_ROOT}/lib/*.bash); do source $filename; done
 
 REPO_DIR=$1                                     # The path to the app's Git repository.
 HEROKU_DIR=$(heroku-dir $REPO_DIR)              # The path in which buildpack content is installed.
@@ -16,18 +16,19 @@ if [ -f ${REPO_DIR}/bin/heroku-hooks/compile-start ]; then
     ${REPO_DIR}/bin/heroku-hooks/compile-start $REPO_DIR | heroku-indent
 fi
 
+export PATH="${PHP_DIR}/bin:${PHP_DIR}/sbin:${NGINX_DIR}/sbin:${PATH}"
+
+echo "Copying configuration" | heroku-notice
+rm -rf ${HEROKU_DIR}/etc
+cp -r ${BUILDPACK_ROOT}/etc ${HEROKU_DIR}/etc
+if [ -d "${REPO_DIR}/etc" ]; then cp -r ${REPO_DIR}/etc ${HEROKU_DIR}/etc; fi
+
 echo 'Downloading dependencies' | heroku-notice
 echo "php v${PHP_VERSION}" | heroku-indent
 s3-download php $PHP_VERSION $PHP_DIR
 
 echo "nginx v${NGINX_VERSION}" | heroku-indent
 s3-download nginx $NGINX_VERSION $NGINX_DIR
-
-export PATH="${PHP_DIR}/bin:${PHP_DIR}/sbin:${NGINX_DIR}/sbin:${PATH}"
-
-echo "Copying configuration" | heroku-notice
-rm -rf ${HEROKU_DIR}/etc
-cp -r ${BUILDPACK_ROOT}/etc ${HEROKU_DIR}/etc
 
 if [ -f "${REPO_DIR}/composer.json" ]; then
     echo "Installing composer dependencies" | heroku-notice
@@ -64,7 +65,7 @@ if [ -f bin/heroku-hooks/dyno-start ]; then
 fi
 
 echo "Starting php-fpm ${PHP_VERSION}"
-php-fpm -y ${RUNTIME_HEROKU_DIR}/etc/php-fpm.conf -c ${RUNTIME_HEROKU_DIR}/etc/php.ini
+php-fpm -y ${RUNTIME_HEROKU_DIR}/etc/php-fpm.conf
 
 echo "Starting nginx ${NGINX_VERSION}"
 tail -f -n 0 ${RUNTIME_NGINX_DIR}/logs/http.log &

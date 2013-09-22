@@ -22,7 +22,8 @@ echo "Compiling" | heroku-notice
 vulcan build -v -s ${PHP_PREFIX} -o ${PHP_PREFIX}.tar.gz -p $PHP_ROOT -c \
     "CFLAGS=-s ./configure \
         --prefix=${PHP_ROOT} \
-        --with-config-file-path=${PHP_ROOT} \
+        --with-config-file-path=${DEPLOY_ROOT}/etc/php \
+        --with-config-file-scan-dir=${DEPLOY_ROOT}/etc/php/conf.d \
         --enable-fpm \
         --with-pgsql \
         --with-pdo-pgsql \
