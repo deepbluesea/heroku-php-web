@@ -18,7 +18,7 @@ http {
     server {
         listen          <?php echo $_SERVER['PORT']; ?>;
         server_name     localhost;
-        root            /app/public;
+        root            /app/web;
 
         location = /favicon.ico {
           return        204;

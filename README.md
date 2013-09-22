@@ -1,29 +1,41 @@
-# Heroku PHP
+# Heroku PHP web server buildpack
 
-This is a custom Heroku buildpack providing an Nginx server dispatching to PHP-FPM.
+This is a custom Heroku buildpack providing an [Nginx] web server dispatching to
+[PHP-FPM], with [Composer] integration.
 
 ## Installation
 
 On a new Heroku app:
 
-    $ heroku create <app-name> --buildpack https://github.com/jmalloc/heroku-php-web.git
+    heroku create <app-name> --buildpack https://github.com/jmalloc/heroku-php-web.git
 
 On an existing Heroku app:
 
-    $ heroku config:set BUILDPACK_URL=https://github.com/jmalloc/heroku-php-web.git
+    heroku config:set BUILDPACK_URL=https://github.com/jmalloc/heroku-php-web.git
 
 ## Application structure
 
 ### PHP
 
- * **/public/** - Any content in this folder will be served statically
- * **/bin/heroku** - Any requests that do not match a file in **public/** are routed to this PHP script
- * **/composer.json** - If a composer.json file is present, non-development [Composer](https://getcomposer.org) dependencies will be installed
+  - `web/` - Any content in this folder will be served statically.
+  - `bin/heroku` - Any requests that do not match a file in **web/** are routed
+    to this PHP script. Executable permissions are not required.
+  - `composer.json` - If present, non-development Composer dependencies will be
+    installed.
 
 ### Heroku hooks
 
-If any of the following files are present they are executed at the appropriate point:
+If any of the following files are present they are executed at the appropriate
+point:
 
- * **/bin/heroku-hooks/compile-start** - Before slug compilation is started; PHP not available
- * **/bin/heroku-hooks/compile-complete** - After slug compilation; PHP Composer dependencies installed
- * **/bin/heroku-hooks/dyno-start** - Before Nginx and PHP-FPM are started
+  - `bin/heroku-hooks/compile-start` - Before slug compilation is started; PHP
+    is not available.
+  - `bin/heroku-hooks/compile-complete` - After slug compilation; PHP and
+    Composer dependencies available.
+  - `bin/heroku-hooks/dyno-start` - Before Nginx and PHP-FPM are started.
+
+<!-- References -->
+
+[Composer]: http://getcomposer.org/
+[PHP-FPM]: http://php-fpm.org/
+[Nginx]: http://nginx.org/
