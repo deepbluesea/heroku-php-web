@@ -53,7 +53,8 @@ set -e
 echo "Preparing environment"
 export PATH="${RUNTIME_PHP_DIR}/bin:${RUNTIME_PHP_DIR}/sbin:${RUNTIME_NGINX_DIR}/sbin:\$PATH"
 touch ${RUNTIME_NGINX_DIR}/logs/http.log
-touch ${RUNTIME_NGINX_DIR}/logs/php.log
+mkdir -p ${RUNTIME_PHP_DIR}/logs
+touch ${RUNTIME_PHP_DIR}/logs/php.log
 mkdir -p /tmp/client_body /tmp/fastcgi
 
 echo "Generating nginx.conf"
@@ -69,7 +70,7 @@ php-fpm -y ${RUNTIME_HEROKU_DIR}/etc/php-fpm.conf
 
 echo "Starting nginx ${NGINX_VERSION}"
 tail -f -n 0 ${RUNTIME_NGINX_DIR}/logs/http.log &
-tail -f -n 0 ${RUNTIME_NGINX_DIR}/logs/php.log &
+tail -f -n 0 ${RUNTIME_PHP_DIR}/logs/php.log &
 nginx -c ${RUNTIME_NGINX_DIR}/conf/nginx.conf
 EOF
 
